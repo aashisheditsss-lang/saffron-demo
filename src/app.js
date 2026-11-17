@@ -188,8 +188,8 @@ export function createApp(config, { fetch = globalThis.fetch, now = Date.now, db
     r.get('/api/dev/outbox', () => ctx.db.prepare("SELECT phone, body, status, at FROM messages WHERE dir = 'out' ORDER BY id DESC LIMIT 50").all());
   }
   // ---------- Web pages (customer menu + tracking, staff, rider) ----------
-  for (const page of ['menu', 'track', 'staff', 'rider']) r.get(`/${page}`, (req, res) => serveFile(res, `${page}.html`));
-  r.get('/', (req, res) => res.writeHead(302, { Location: '/menu' }).end());
+  for (const page of ['menu', 'track', 'staff', 'rider', 'home']) r.get(`/${page}`, (req, res) => serveFile(res, `${page}.html`));
+  r.get('/', (req, res) => serveFile(res, 'site.html')); // product showcase; /home is the sample restaurant's own site
   r.get('/static/:f', (req, res) => serveFile(res, req.params.f));
   r.get('/img/:f', (req, res) => serveFile(res, `img/${req.params.f}`));
 

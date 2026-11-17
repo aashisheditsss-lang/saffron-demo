@@ -101,7 +101,7 @@ function renderList() {
 function dish(i) {
   return `<article class="dish${i.available ? '' : ' sold'}" id="d-${esc(i.id)}">
     <div>
-      <div class="drow"><span class="vegmark${i.veg ? '' : ' nv'}" role="img" aria-label="${i.veg ? 'Vegetarian' : 'Non-vegetarian'}"></span>${i.bestseller ? '<span class="best">${icon.star} Bestseller</span>' : ''}</div>
+      <div class="drow"><span class="vegmark${i.veg ? '' : ' nv'}" role="img" aria-label="${i.veg ? 'Vegetarian' : 'Non-vegetarian'}"></span>${i.bestseller ? `<span class="best">${icon.star} Bestseller</span>` : ''}</div>
       <h3>${esc(nm(i))}</h3>
       <div class="dprice">${aed(i.price)}</div>
       <p class="ddesc">${esc(i.desc)}</p>
@@ -294,13 +294,29 @@ function zone() {
   z.style.color = ok ? 'var(--ok)' : 'var(--bad)';
 }
 
-function locate() {
+const LOC_ERR = {
+  1: 'Location is blocked for this page. Allow it in your browser settings, or tap the map.',
+  2: "Your phone couldn't find its location. Tap the map instead.",
+  3: 'Finding you took too long. Tap the map instead.',
+};
+
+function locate(precise = true) {
   if (!navigator.geolocation) return toast('Your browser cannot share location. Tap the map instead.');
+  if (!window.isSecureContext) return toast('Location only works on the secure (https) link. Tap the map instead.');
   $('#zone').textContent = 'Finding you…';
   navigator.geolocation.getCurrentPosition(
-    (p) => { setPin(p.coords.latitude, p.coords.longitude); map?.setView(co.pin, 17); },
-    () => { zone(); toast("Couldn't get your location. Tap the map instead."); },
-    { enableHighAccuracy: true, timeout: 10000 },
+    (p) => {
+      setPin(p.coords.latitude, p.coords.longitude);
+      map?.setView(co.pin, 17);
+      // GPS indoors is often off by a building or two; ask them to fine-tune.
+      if (p.coords.accuracy > 60) toast(`Pin is within about ${Math.round(p.coords.accuracy)} m. Drag it onto your building.`);
+    },
+    (e) => {
+      // Indoors, precise GPS often times out; a rough network fix still beats nothing.
+      if (precise && e.code !== 1) return locate(false);
+      zone(); toast(LOC_ERR[e.code] || LOC_ERR[2]);
+    },
+    precise ? { enableHighAccuracy: true, timeout: 10000 } : { enableHighAccuracy: false, timeout: 8000, maximumAge: 60000 },
   );
 }
 

@@ -85,7 +85,7 @@ test('end to end: WhatsApp → order → kitchen → rider → delivered → rat
   const me = await t.call('GET', `/api/me?t=${encodeURIComponent(token)}`);
   assert.equal(me.data.name, 'Sara');
 
-  const far = await t.call('POST', '/api/orders', { token, type: 'delivery', payment: 'cod', items: [{ id: 'shawarma', qty: 2 }], address: { ...HOME, lat: 25.3 } });
+  const far = await t.call('POST', '/api/orders', { token, type: 'delivery', payment: 'cod', items: [{ id: 'shawarma', qty: 2 }], address: { ...HOME, lat: 24.80, lng: 56.12 } }); // Hatta, ~96 km: outside the 50 km Dubai circle
   assert.equal(far.status, 400);
 
   const body = { token, idemKey: 'k1', type: 'delivery', payment: 'cod', items: [{ id: 'shawarma', qty: 2 }, { id: 'mango', qty: 1, addons: ['lg'] }], address: HOME };

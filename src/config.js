@@ -29,7 +29,9 @@ export function loadConfig(env = process.env) {
       whatsapp: (env.SHOP_WHATSAPP || '').replace(/\D/g, ''), // the restaurant's WhatsApp number, e.g. 971501234567 (for "Message us" links)
       lat: Number(env.SHOP_LAT || 25.1852),
       lng: Number(env.SHOP_LNG || 55.2721),
-      radiusKm: Number(env.DELIVERY_RADIUS_KM || 5),
+      // shortcut: a circle, not Dubai's real border. 50 km from Downtown reaches Jebel Ali/Dubai South but also
+      // takes in Sharjah and Ajman, and misses Hatta. Use a boundary polygon if that matters.
+      radiusKm: Number(env.DELIVERY_RADIUS_KM || 50),
       deliveryFee: Math.round(Number(env.DELIVERY_FEE_AED || 0) * 100), // fils; 0 = free delivery
       minOrder: Math.round(Number(env.MIN_ORDER_AED || 0) * 100),       // fils; 0 = no minimum
       open: env.OPEN_TIME || '10:00',

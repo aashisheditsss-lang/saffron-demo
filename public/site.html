@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tawla · WhatsApp ordering for restaurants</title>
+<meta name="description" content="Let customers order on your restaurant's own WhatsApp: menu link, checkout, kitchen screen, rider tracking. No commission.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="/static/site.css">
+</head>
+<body>
+<header class="wrap top">
+  <a class="logo" href="/">Tawla<b>.</b></a>
+  <nav class="nav" aria-label="Sections">
+    <a href="#how">How it works</a><a href="#live">Try it</a><a href="#savings">Savings</a>
+  </nav>
+  <a class="btn ghost" href="#contact">Book a demo</a>
+</header>
+
+<main>
+  <div class="wrap hero">
+    <div>
+      <p class="eyebrow">For restaurants in the UAE</p>
+      <h1 style="margin-top:16px">Your customers already order on WhatsApp. <em>Let it run itself.</em></h1>
+      <p class="lede">A customer messages your own number. They get a menu link with their order already in the cart, pay, and drop a pin. Your kitchen sees it at once, your rider takes it, and the customer watches them arrive. No app to download, no commission on every order.</p>
+      <div class="ctas">
+        <a class="btn primary" href="/home">See a demo restaurant</a>
+        <a class="btn ghost" href="#how">How it works</a>
+      </div>
+      <p class="note">Everything on this page links to the working product, not mock-ups.</p>
+    </div>
+
+    <div class="phone" aria-label="Example WhatsApp conversation">
+      <div class="screen">
+        <div class="chathead"><span class="av" aria-hidden="true"></span><div><b>Saffron &amp; Salt</b><small>Business account</small></div></div>
+        <div class="chat">
+          <p class="msg me">2 chicken shawarma and a mango juice<time>7:42 pm</time></p>
+          <p class="msg">Got it 👍<br>1× Fresh Mango Juice<br>2× Chicken Shawarma<br>Tap below to check your cart, add extras, and pay.<span class="cta">Review your order</span><time>7:42 pm</time></p>
+          <p class="msg">✅ Order #1042 confirmed · AED 38.00<br>Ready in about 20 min.<time>7:44 pm</time></p>
+          <p class="msg">🛵 Ahmed is on the way. Track live:<span class="cta">Track your order</span><time>8:03 pm</time></p>
+          <p class="msg me">Thank you!<time>8:04 pm</time></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section id="how">
+    <div class="wrap">
+      <p class="eyebrow">How it works</p>
+      <h2 style="margin-top:16px">One number, from first message to the door.</h2>
+      <ol class="steps">
+        <li><h3>They message you</h3><p>From Google Maps, Instagram or a missed call. The bot reads “2 shawarma and a juice” and matches it to your menu, in English or Arabic.</p></li>
+        <li><h3>They check out</h3><p>A menu link opens with the cart filled. Add-ons, a map pin for the door, then card, cash or card machine on delivery.</p></li>
+        <li><h3>Your kitchen accepts</h3><p>Orders land on a live kitchen screen. One tap to accept with a ready time; the customer is told on WhatsApp.</p></li>
+        <li><h3>They watch it arrive</h3><p>Your rider’s phone shares GPS. The customer sees the bike move and gets “arriving now” when it’s close.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="live">
+    <div class="wrap">
+      <p class="eyebrow">Try it</p>
+      <h2 style="margin-top:16px">Four screens, all working.</h2>
+      <p class="intro">Open these on your phone. Place an order on the menu, then accept it on the kitchen screen and watch the tracking page update.</p>
+      <div class="screens">
+        <a href="/home"><img src="/img/grill.jpg" alt="" loading="lazy"><div class="t"><h3>Restaurant site <span>→</span></h3><p>What customers find on Google Maps.</p></div></a>
+        <a href="/menu"><img src="/img/shawarma.jpg" alt="" loading="lazy"><div class="t"><h3>Menu &amp; checkout <span>→</span></h3><p>Photos, add-ons, search, map pin.</p></div></a>
+        <a href="/staff"><img src="/img/biryani.jpg" alt="" loading="lazy"><div class="t"><h3>Kitchen screen <span>→</span></h3><p>Demo password <code>dev-staff</code></p></div></a>
+        <a href="/rider"><img src="/img/falafel.jpg" alt="" loading="lazy"><div class="t"><h3>Rider app <span>→</span></h3><p>Add a rider on the kitchen screen to get their link.</p></div></a>
+      </div>
+    </div>
+  </section>
+
+  <section id="savings">
+    <div class="wrap">
+      <p class="eyebrow">Savings</p>
+      <h2 style="margin-top:16px">What you keep when orders come direct.</h2>
+      <p class="intro">Move the sliders to your numbers. Commission rates vary by platform and contract, so set the one on yours.</p>
+      <div class="calc">
+        <div>
+          <label><span>Direct orders a day <output id="o-n">80</output></span><input id="n" type="range" min="10" max="300" step="5" value="80"></label>
+          <label><span>Average order (AED) <output id="o-v">60</output></span><input id="v" type="range" min="20" max="200" step="5" value="60"></label>
+          <label><span>Platform commission <output id="o-c">25%</output></span><input id="c" type="range" min="5" max="35" step="1" value="25"></label>
+        </div>
+        <div class="result" aria-live="polite">
+          <p>Commission you’d keep each month</p>
+          <p class="big">AED <span id="total">36,000</span></p>
+          <p id="sum">80 orders × AED 60 × 25% × 30 days</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">What you get</p>
+      <h2 style="margin-top:16px">Your customers stay yours.</h2>
+      <ul class="gets">
+        <li><b>Your own WhatsApp number</b><span>Customers talk to you, not a marketplace, and you keep their phone numbers.</span></li>
+        <li><b>English and Arabic</b><span>Menu, search and the bot both understand Arabic.</span></li>
+        <li><b>UAE-ready checkout</b><span>Prices in AED with 5% VAT included; cash, card machine or card online.</span></li>
+        <li><b>Your own riders</b><span>Riders use a link on their phone. No app store, no extra devices.</span></li>
+        <li><b>A person when it matters</b><span>Allergy questions and low ratings go straight to staff to reply.</span></li>
+        <li><b>Daily report</b><span>Orders, takings and cash collected per rider, every day.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="closer" id="contact">
+    <div class="wrap">
+      <h2>Run a two-week pilot with your menu.</h2>
+      <p class="intro">We set up your menu and photos, connect your WhatsApp number and train your staff. You see real orders before you commit.</p>
+      <div class="ctas">
+        <a class="btn primary" href="mailto:hello@tawla.example?subject=Pilot%20for%20my%20restaurant">Book a demo</a>
+        <a class="btn ghost" href="/home">See the demo restaurant</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">Tawla prototype · Demo data only · Photos from Unsplash</footer>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+  const fmt = (n) => Math.round(n).toLocaleString('en-US');
+  function calc() {
+    const n = +$('n').value, v = +$('v').value, c = +$('c').value;
+    $('o-n').textContent = n; $('o-v').textContent = v; $('o-c').textContent = c + '%';
+    $('total').textContent = fmt(n * v * c / 100 * 30);
+    $('sum').textContent = `${n} orders × AED ${v} × ${c}% × 30 days`;
+  }
+  for (const id of ['n', 'v', 'c']) $(id).addEventListener('input', calc);
+  calc();
+</script>
+</body>
+</html>

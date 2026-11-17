@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Saffron &amp; Salt · Dubai</title>
+<meta name="description" content="Shawarma, grills, biryani and fresh juices. Order on WhatsApp for delivery across Dubai.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&family=Noto+Sans+Arabic:wght@400;600&display=swap">
+<link rel="stylesheet" href="/static/site.css">
+</head>
+<body>
+<p class="demo-strip">A demo restaurant for the <a href="/">Tawla</a> prototype. Orders here are test orders.</p>
+
+<header class="rhero">
+  <div class="wrap">
+    <h1>Saffron &amp; Salt</h1>
+    <p class="ar" lang="ar" dir="rtl" style="text-align:left">زعفران وملح</p>
+    <p class="facts"><span id="hours">Open daily</span><span id="area">Delivery across Dubai</span><span>No minimum order</span></p>
+    <div class="ctas">
+      <a class="btn wa wa-link" href="/menu"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm5.3 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7a11.4 11.4 0 0 1-4.5-4c-.4-.6-1-1.6-1-2.7s.6-1.7.8-1.9c.2-.2.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.4.6-.3.4c-.1.1-.2.3 0 .5.1.2.7 1.1 1.5 1.8 1 .9 1.9 1.2 2.1 1.3.3.1.4.1.6-.1l.8-1c.2-.2.4-.2.6-.1l1.9.9c.3.1.4.2.5.3.1.2.1.7-.1 1.3Z"/></svg>Order on WhatsApp</a>
+      <a class="btn ghost" href="/menu">See the menu</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section style="border-top:0">
+    <div class="wrap">
+      <p class="eyebrow">Most ordered</p>
+      <h2 style="margin-top:16px">Grilled over charcoal, wrapped to order.</h2>
+      <div class="dishes" id="dishes" aria-live="polite"></div>
+      <p style="margin-top:32px"><a class="btn ghost" href="/menu">Full menu →</a></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <p class="eyebrow">Find us</p>
+      <h2 style="margin-top:16px">Come by, or we’ll come to you.</h2>
+      <div class="visit">
+        <dl>
+          <dt>Where</dt><dd>Downtown Dubai (demo address)<br><a id="dir" href="#" target="_blank" rel="noopener">Directions in Google Maps</a></dd>
+          <dt>Hours</dt><dd id="hours2">Open daily</dd>
+          <dt>Delivery</dt><dd id="area2">Across Dubai · free delivery</dd>
+          <dt>WhatsApp</dt><dd><a class="wa-link" href="/menu" id="waText">Message us</a></dd>
+          <dt>Pay</dt><dd>Card, cash, or card machine at your door</dd>
+        </dl>
+        <div class="mapcard"><iframe id="map" title="Map showing the restaurant" loading="lazy"></iframe></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="wrap">© Saffron &amp; Salt · Prices include 5% VAT</footer>
+<a class="btn wa fab wa-link" href="/menu" aria-label="Order on WhatsApp" data-hide>Order</a>
+<script>
+  // Show the floating Order button only once the hero's own buttons are off screen.
+  const fab = document.querySelector('.fab');
+  new IntersectionObserver(([e]) => fab.toggleAttribute('data-hide', e.isIntersecting)).observe(document.querySelector('.rhero .ctas'));
+</script>
+
+<script type="module">
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const aed = (f) => 'AED ' + (f / 100).toFixed(2);
+  try {
+    const { shop, items } = await fetch('/api/menu').then((r) => r.json());
+    const hours = shop.open === shop.close ? 'Open 24 hours' : `Open ${shop.open}–${shop.close}`;
+    const area = shop.radiusKm >= 40 ? 'Delivery across Dubai' : `Delivery within ${shop.radiusKm} km`;
+    document.querySelector('#hours').textContent = document.querySelector('#hours2').textContent = hours;
+    document.querySelector('#area').textContent = area;
+    document.querySelector('#area2').textContent = area + (shop.deliveryFee ? '' : ' · free delivery');
+    if (shop.whatsapp) {
+      const wa = `https://wa.me/${shop.whatsapp}?text=${encodeURIComponent('Hi, I’d like to order')}`;
+      document.querySelectorAll('.wa-link').forEach((a) => { a.href = wa; a.target = '_blank'; a.rel = 'noopener'; });
+      document.querySelector('#waText').textContent = '+' + shop.whatsapp;
+    }
+    document.querySelector('#dir').href = `https://www.google.com/maps/search/?api=1&query=${shop.lat},${shop.lng}`;
+    const d = 0.01;
+    document.querySelector('#map').src = `https://www.openstreetmap.org/export/embed.html?bbox=${shop.lng - d},${shop.lat - d},${shop.lng + d},${shop.lat + d}&layer=mapnik&marker=${shop.lat},${shop.lng}`;
+    const pick = [...items.filter((i) => i.available && i.bestseller), ...items.filter((i) => i.available && !i.bestseller)].slice(0, 4);
+    document.querySelector('#dishes').innerHTML = pick.map((i) => `
+      <a class="dish" href="/menu?item=${encodeURIComponent(i.id)}" style="text-decoration:none">
+        <img src="/${esc(i.image)}" alt="${esc(i.name)}" loading="lazy">
+        <h3>${esc(i.name)}</h3><p>${esc(i.desc || '')}</p><p class="price">${aed(i.price)}</p>
+      </a>`).join('');
+  } catch {
+    document.querySelector('#dishes').innerHTML = '<p class="muted">The menu is taking a moment. <a href="/menu">Open the menu</a>.</p>';
+  }
+</script>
+</body>
+</html>
