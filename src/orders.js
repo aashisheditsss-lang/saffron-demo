@@ -118,7 +118,11 @@ export async function transition(ctx, id, to, { by = 'staff', prepMin, riderId, 
   if (to === 'PICKED_UP' && o.type !== 'delivery') throw new HttpError(409, 'Only delivery orders are picked up by a rider.');
   if (to === 'DELIVERED' || to === 'COLLECTED') {
     set.delivered_at = now;
-    if (o.payment_method !== 'card') { set.payment_status = 'paid'; set.cash_collected = cashCollected == null ? o.total : Math.round(Number(cashCollected)); }
+    if (o.payment_method !== 'card') {
+      const cash = cashCollected == null ? o.total : Number(cashCollected);
+      if (!Number.isInteger(cash) || cash < 0 || cash > o.total) throw new HttpError(400, `Cash collected must be between 0 and ${o.total} fils.`);
+      set.payment_status = 'paid'; set.cash_collected = cash;
+    }
   }
   if (to === 'CONFIRMED' && o.status === 'PAYMENT_PENDING') set.payment_status = 'paid';
   if (['REJECTED', 'CANCELLED', 'EXPIRED'].includes(to) && o.payment_status === 'paid') set.payment_status = ctx.payments.refund(o);

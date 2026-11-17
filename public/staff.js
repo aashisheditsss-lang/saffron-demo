@@ -5,6 +5,7 @@ import { $, esc, aed, api, store, toast, ago, STATUS, PAY } from './common.js';
 const app = $('#app');
 let token = store.get('staffToken');
 let tab = 'orders', orders = new Map(), riders = [], chats = [], menu = null, report = null, alerts = [], es = null, newRider = null;
+let streamRetry = null, everConnected = false;
 const REASONS = ['Too busy right now', 'Item not available', 'Address problem'];
 const COLS = [['New orders', ['CONFIRMED', 'PAYMENT_PENDING']], ['Cooking', ['ACCEPTED']], ['Ready', ['READY']], ['Out for delivery', ['RIDER_ASSIGNED', 'PICKED_UP', 'ARRIVING']]];
 const call = (path, opts = {}) => api(path, { ...opts, token });
@@ -12,7 +13,7 @@ const call = (path, opts = {}) => api(path, { ...opts, token });
 token ? start() : loginScreen();
 
 function loginScreen(msg = '') {
-  es?.close();
+  es?.close(); clearTimeout(streamRetry); everConnected = false;
   app.innerHTML = `<form class="loginbox" id="login"><h1>Restaurant login</h1>
     <p class="muted" style="margin:0">For kitchen, reception and the manager.</p>
     <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)">Staff password<input class="input" id="pw" type="password" autocomplete="current-password" required></label>
@@ -44,11 +45,22 @@ function shell() {
   $('#body').onsubmit = onSubmit;
 }
 
-function stream() {
-  es?.close();
-  es = new EventSource(`/api/staff/stream?token=${encodeURIComponent(token)}`);
-  es.onopen = () => { $('#live').textContent = 'Live'; };
-  es.onerror = () => { $('#live').textContent = 'Reconnecting…'; };
+async function stream() {
+  es?.close(); clearTimeout(streamRetry);
+  let ticket;
+  try { ({ ticket } = await call('/api/staff/stream-ticket', { method: 'POST', body: {} })); }
+  catch (e) {
+    if (e.status === 401) { store.set('staffToken', null); return loginScreen('Please log in again.'); }
+    $('#live').textContent = 'Reconnecting…'; streamRetry = setTimeout(stream, 5000); return;
+  }
+  es = new EventSource(`/api/staff/stream?ticket=${encodeURIComponent(ticket)}`);
+  es.onopen = async () => {
+    $('#live').textContent = 'Live';
+    if (everConnected) { orders = new Map((await call('/api/staff/orders').catch(() => [])).map((o) => [o.id, o])); render(); } // catch up on anything missed
+    everConnected = true;
+  };
+  // The pass is single-use per connection; on any drop, get a fresh one rather than letting the browser retry the old URL.
+  es.onerror = () => { $('#live').textContent = 'Reconnecting…'; es.close(); streamRetry = setTimeout(stream, 3000); };
   es.addEventListener('order', (e) => {
     const o = JSON.parse(e.data), isNew = !orders.has(o.id) || orders.get(o.id).status !== o.status;
     orders.set(o.id, o);

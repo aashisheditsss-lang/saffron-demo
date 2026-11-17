@@ -11,7 +11,7 @@ import { createPayments } from './payments.js';
 import { handleWebhook, missedCall } from './bot.js';
 import { customerPhone, requireStaff, requireRider } from './auth.js';
 import { createOrder, transition, getOrder, riderLocation, trackLink, ACTIVE } from './orders.js';
-import { randomToken, sha256, safeEqual } from './tokens.js';
+import { randomToken, sha256, safeEqual, sign, verify } from './tokens.js';
 import { aed } from './pricing.js';
 
 export function createApp(config, { fetch = globalThis.fetch, now = Date.now, db } = {}) {
@@ -142,9 +142,11 @@ export function createApp(config, { fetch = globalThis.fetch, now = Date.now, db
         WHERE o.created_at >= ? AND o.payment_method = 'cod' AND o.status = 'DELIVERED' GROUP BY r.id`).all(since),
     };
   });
-  // Live updates for the staff screens (Server-Sent Events).
+  // Live updates for the staff screens (Server-Sent Events). EventSource can't send headers, so the screen first
+  // swaps its password (header) for a 60-second pass, and only that pass goes in the URL — never the password.
+  r.post('/api/staff/stream-ticket', (req) => { requireStaff(ctx, req); return { ticket: sign({ staff: 1 }, config.secret, 60, ctx.now()) }; });
   r.get('/api/staff/stream', (req, res) => {
-    requireStaff(ctx, req);
+    if (!verify(req.query.ticket, config.secret, ctx.now())?.staff) throw new HttpError(401, 'Staff login required.');
     res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
     res.write('retry: 3000\n\n');
     const subs = ['order', 'alert', 'handoff', 'rider', 'menu'].map((ev) => {
@@ -171,8 +173,8 @@ export function createApp(config, { fetch = globalThis.fetch, now = Date.now, db
   r.post('/api/rider/orders/:id/pickup', (req) => { const rd = requireRider(ctx, req); mine(rd, req.params.id); return transition(ctx, req.params.id, 'PICKED_UP', { by: `rider:${rd.id}` }).then(() => ({ ok: true })); });
   r.post('/api/rider/orders/:id/deliver', async (req) => {
     const rd = requireRider(ctx, req); mine(rd, req.params.id);
-    const b = await json(req);
-    await transition(ctx, req.params.id, 'DELIVERED', { by: `rider:${rd.id}`, cashCollected: b.cashCollected });
+    // The rider can't choose the cash amount: the full total is recorded. Shortfalls are settled by staff at hand-in.
+    await transition(ctx, req.params.id, 'DELIVERED', { by: `rider:${rd.id}` });
     return { ok: true };
   });
   r.post('/api/rider/location', async (req) => {

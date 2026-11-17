@@ -31,7 +31,7 @@ export async function customerPhone(ctx, req, t) {
 }
 
 export function requireStaff(ctx, req) {
-  const token = bearer(req) || req.query.token || ''; // EventSource can't send headers, so the stream uses ?token=
+  const token = bearer(req); // header only: the password never goes in a URL (the live stream uses a short-lived ticket)
   if (!safeEqual(token, ctx.config.staffToken)) throw new HttpError(401, 'Staff login required.');
 }
 

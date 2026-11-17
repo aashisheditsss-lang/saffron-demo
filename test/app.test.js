@@ -166,6 +166,30 @@ test('card payment: pay page confirms; unpaid order expires after 15 min', async
   t.close();
 });
 
+test('security: rider cannot set cash amount; staff password never accepted in the URL', async () => {
+  const t = await start();
+  const token = new URL(menuLink(t.app.ctx, CUSTOMER)).searchParams.get('t');
+  const o = (await t.call('POST', '/api/orders', { token, type: 'delivery', payment: 'cod', items: [{ id: 'grill', qty: 1 }], address: HOME })).data;
+  for (const step of [['accept', { prepMin: 10 }], ['ready', {}]]) await t.call('POST', `/api/staff/orders/${o.id}/${step[0]}`, step[1], 'dev-staff');
+  const rider = (await t.call('POST', '/api/staff/riders', { name: 'R' }, 'dev-staff')).data;
+  await t.call('POST', `/api/staff/orders/${o.id}/assign`, { riderId: rider.id }, 'dev-staff');
+  await t.call('POST', `/api/rider/orders/${o.id}/pickup`, {}, rider.token);
+  await t.call('POST', `/api/rider/orders/${o.id}/deliver`, { cashCollected: 1 }, rider.token); // tries to report AED 0.01
+  assert.equal(t.app.ctx.db.prepare('SELECT cash_collected FROM orders WHERE id = ?').get(o.id).cash_collected, 5500);
+
+  assert.equal((await t.call('GET', '/api/staff/orders?token=dev-staff')).status, 401);
+  assert.equal((await t.call('GET', '/api/staff/stream?token=dev-staff')).status, 401);
+  assert.equal((await t.call('GET', `/api/staff/stream?ticket=${encodeURIComponent(token)}`)).status, 401); // a customer link is not a staff pass
+  const { ticket } = (await t.call('POST', '/api/staff/stream-ticket', {}, 'dev-staff')).data;
+  const ctrl = new AbortController();
+  const res = await fetch(`http://127.0.0.1:${t.app.server.address().port}/api/staff/stream?ticket=${encodeURIComponent(ticket)}`, { signal: ctrl.signal });
+  assert.equal(res.status, 200);
+  ctrl.abort();
+  t.tick(61000);
+  assert.equal((await t.call('GET', `/api/staff/stream?ticket=${encodeURIComponent(ticket)}`)).status, 401); // expired
+  t.close();
+});
+
 test('web pages and photos are served; path tricks are refused', async () => {
   const t = await start();
   for (const p of ['/menu', '/track', '/staff', '/rider']) assert.match((await t.call('GET', p)).data, /<!doctype html>/);
