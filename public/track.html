@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Track your order</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<main class="wrap" id="app">
+  <p class="muted" id="loading">Loading your order…</p>
+  <div id="view" hidden style="display:contents">
+    <section class="rcard">
+      <div class="row between"><h1 id="title" class="ordno">Order</h1><span class="pill" id="pill"></span></div>
+      <div class="eta" aria-live="polite"><small id="etaLabel"></small><b id="eta"></b></div>
+    </section>
+    <div id="trackmap" class="trackmap" hidden></div>
+    <section class="sec" id="rider" hidden></section>
+    <section class="sec"><h2>Progress</h2><ol class="steps" id="steps"></ol></section>
+    <section class="sec sum" id="items"></section>
+    <a class="btn help" id="help" hidden target="_blank" rel="noopener"></a>
+    <p class="muted" id="helpText" style="margin:0;font-size:14px;text-align:center">Need help? Reply in our WhatsApp chat and a team member will answer.</p>
+  </div>
+</main>
+<script type="module" src="/static/track.js"></script>
+</body>
+</html>

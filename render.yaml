@@ -1,0 +1,48 @@
+# Render "Blueprint": New → Blueprint → pick this repo. Render builds the Dockerfile and keeps the database on a disk.
+services:
+  - type: web
+    name: saffron-ordering
+    runtime: docker
+    plan: starter            # a paid plan is needed for a persistent disk
+    region: frankfurt        # closest Render region to Dubai
+    healthCheckPath: /health
+    disk:
+      name: data
+      mountPath: /data
+      sizeGB: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_FILE
+        value: /data/data.db
+      - key: APP_SECRET
+        generateValue: true  # random, made by Render
+      - key: STAFF_TOKEN
+        generateValue: true  # the staff screen password; copy it from Render's Environment tab
+      - key: WA_VERIFY_TOKEN
+        generateValue: true
+      # Filled in by you in Render's dashboard (sync: false = never stored in this file):
+      - key: PUBLIC_URL      # e.g. https://order.saffronandsalt.ae
+        sync: false
+      - key: WA_TOKEN
+        sync: false
+      - key: WA_PHONE_NUMBER_ID
+        sync: false
+      - key: WA_APP_SECRET
+        sync: false
+      - key: WA_UPDATE_TEMPLATE
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SHOP_NAME
+        sync: false
+      - key: SHOP_WHATSAPP
+        sync: false
+      - key: SHOP_LAT
+        sync: false
+      - key: SHOP_LNG
+        sync: false
+      - key: TRN
+        sync: false

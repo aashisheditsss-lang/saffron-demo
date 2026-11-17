@@ -1,0 +1,6 @@
+.env
+*.db
+*.db-*
+test
+.impeccable
+node_modules
