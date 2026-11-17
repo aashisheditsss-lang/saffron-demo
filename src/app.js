@@ -189,6 +189,7 @@ export function createApp(config, { fetch = globalThis.fetch, now = Date.now, db
   }
   // ---------- Web pages (customer menu + tracking, staff, rider) ----------
   for (const page of ['menu', 'track', 'staff', 'rider', 'home']) r.get(`/${page}`, (req, res) => serveFile(res, `${page}.html`));
+  for (const page of ['kitchen', 'owner']) r.get(`/${page}`, (req, res) => serveFile(res, 'staff.html')); // staff.js picks tabs by path
   r.get('/', (req, res) => serveFile(res, 'site.html')); // product showcase; /home is the sample restaurant's own site
   r.get('/static/:f', (req, res) => serveFile(res, req.params.f));
   r.get('/img/:f', (req, res) => serveFile(res, `img/${req.params.f}`));

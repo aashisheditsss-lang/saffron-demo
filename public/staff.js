@@ -4,7 +4,15 @@ import { $, esc, aed, api, store, toast, ago, STATUS, PAY } from './common.js';
 
 const app = $('#app');
 let token = store.get('staffToken');
-let tab = 'orders', orders = new Map(), riders = [], chats = [], menu = null, report = null, alerts = [], es = null, newRider = null;
+// One screen, three doors: /kitchen (live orders), /owner (takings, menu, riders), /staff (everything).
+// shortcut: all three use the same staff password; give the owner a separate login before real staff use it.
+const ROLES = {
+  kitchen: { label: 'Kitchen', tabs: ['orders', 'chats'] },
+  owner: { label: 'Owner', tabs: ['today', 'menu', 'riders', 'orders'] },
+  staff: { label: '', tabs: ['orders', 'chats', 'menu', 'riders', 'today'] },
+};
+const ROLE = ROLES[location.pathname.replace(/\W/g, '')] || ROLES.staff;
+let tab = ROLE.tabs[0], orders = new Map(), riders = [], chats = [], menu = null, report = null, alerts = [], es = null, newRider = null;
 let streamRetry = null, everConnected = false;
 const REASONS = ['Too busy right now', 'Item not available', 'Address problem'];
 const COLS = [['New orders', ['CONFIRMED', 'PAYMENT_PENDING']], ['Cooking', ['ACCEPTED']], ['Ready', ['READY']], ['Out for delivery', ['RIDER_ASSIGNED', 'PICKED_UP', 'ARRIVING']]];
@@ -35,7 +43,7 @@ async function start() {
 }
 
 function shell() {
-  app.innerHTML = `<header class="staffbar"><h1>${esc(menu.shop.name)}</h1><span class="live" id="live">Connecting…</span><button class="sbtn" id="logout">Log out</button></header>
+  app.innerHTML = `<header class="staffbar"><h1>${esc(menu.shop.name)}${ROLE.label ? ` · ${ROLE.label}` : ''}</h1><span class="live" id="live">Connecting…</span><button class="sbtn" id="logout">Log out</button></header>
     <nav class="tabs" role="tablist" id="tabs"></nav>
     <main class="staffmain"><div class="alerts" id="alerts" aria-live="assertive"></div><div id="body"></div></main>`;
   $('#logout').onclick = () => { store.set('staffToken', null); token = null; loginScreen(); };
@@ -85,7 +93,8 @@ function beep() {
 const active = () => [...orders.values()].filter((o) => COLS.some(([, s]) => s.includes(o.status)));
 function renderTabs() {
   const nNew = [...orders.values()].filter((o) => o.status === 'CONFIRMED').length;
-  const t = [['orders', 'Orders', nNew], ['chats', 'Chats', chats.length], ['menu', 'Menu', 0], ['riders', 'Riders', 0], ['today', 'Today', 0]];
+  const all = { orders: ['Orders', nNew], chats: ['Chats', chats.length], menu: ['Menu', 0], riders: ['Riders', 0], today: ['Today', 0] };
+  const t = ROLE.tabs.map((id) => [id, ...all[id]]);
   $('#tabs').innerHTML = t.map(([id, label, n]) => `<button role="tab" data-tab="${id}" aria-selected="${tab === id}">${label}${n ? `<span class="badge">${n}</span>` : ''}</button>`).join('');
   document.title = nNew ? `(${nNew}) New order${nNew > 1 ? 's' : ''}` : 'Restaurant orders';
 }
@@ -134,7 +143,7 @@ function card(o) {
       ? `<button class="sbtn primary" data-do="collected">Customer collected</button>`
       : (riders.some((r) => r.active)
         ? `<select data-rider aria-label="Rider for order ${o.id}">${riders.filter((r) => r.active).map((r) => `<option value="${r.id}">${esc(r.name)}</option>`).join('')}</select><button class="sbtn primary" data-do="assign">Assign</button>`
-        : '<span class="muted">Add a rider in the Riders tab</span>');
+        : `<span class="muted">${ROLE.tabs.includes('riders') ? 'Add a rider in the Riders tab' : 'No riders yet: the owner adds them'}</span>`);
     actions += more('Cancel', 'cancel');
   }
   if (o.status === 'RIDER_ASSIGNED') actions = `<span class="muted">${esc(rider?.name || 'Rider')} is coming to collect</span><button class="sbtn" data-do="unassign">Change rider</button>`;
