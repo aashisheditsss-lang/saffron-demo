@@ -147,7 +147,8 @@ export function createApp(config, { fetch = globalThis.fetch, now = Date.now, db
   r.post('/api/staff/stream-ticket', (req) => { requireStaff(ctx, req); return { ticket: sign({ staff: 1 }, config.secret, 60, ctx.now()) }; });
   r.get('/api/staff/stream', (req, res) => {
     if (!verify(req.query.ticket, config.secret, ctx.now())?.staff) throw new HttpError(401, 'Staff login required.');
-    res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', Connection: 'keep-alive' });
+    // no-transform + X-Accel-Buffering: stop proxies (Cloudflare, nginx) from buffering/compressing the live stream.
+    res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store, no-transform', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
     res.write('retry: 3000\n\n');
     const subs = ['order', 'alert', 'handoff', 'rider', 'menu'].map((ev) => {
       const fn = (data) => res.write(`event: ${ev}\ndata: ${JSON.stringify(data)}\n\n`);
@@ -185,7 +186,8 @@ export function createApp(config, { fetch = globalThis.fetch, now = Date.now, db
 
   // ---------- Dev helpers ----------
   if (!config.production) {
-    r.get('/api/dev/outbox', () => ctx.db.prepare("SELECT phone, body, status, at FROM messages WHERE dir = 'out' ORDER BY id DESC LIMIT 50").all());
+    r.get('/demo', (req, res) => serveFile(res, 'demo.html')); // self-playing walkthrough; uses the dev staff password
+    r.get('/api/dev/outbox',() => ctx.db.prepare("SELECT phone, body, status, at FROM messages WHERE dir = 'out' ORDER BY id DESC LIMIT 50").all());
   }
   // ---------- Web pages (customer menu + tracking, staff, rider) ----------
   for (const page of ['menu', 'track', 'staff', 'rider', 'home']) r.get(`/${page}`, (req, res) => serveFile(res, `${page}.html`));

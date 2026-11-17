@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Live demo · WhatsApp ordering</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+  :root{--bg:#14110E;--panel:#1C1814;--line:#3A322A;--fg:#EFE9E1;--muted:#A99F92;--accent:#F2A53A;--on-accent:#1F1406;color-scheme:dark}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 "IBM Plex Sans","Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column}
+  header{display:grid;grid-template-columns:1fr auto;gap:8px 24px;align-items:center;padding:16px 24px;border-bottom:1px solid var(--line)}
+  .step{font:700 clamp(20px,2.2vw,30px)/1.15 "Bricolage Grotesque",system-ui,sans-serif;letter-spacing:-.01em;min-height:1.2em}
+  .step b{color:var(--accent);font-weight:700}
+  .sub{color:var(--muted);font-size:14px;margin-top:4px}
+  .dots{display:flex;gap:6px;margin-top:12px}
+  .dots i{width:24px;height:4px;border-radius:2px;background:var(--line);transition:background-color .3s ease}
+  .dots i.on{background:var(--accent)}
+  .ctrl{display:flex;gap:8px}
+  button{min-height:40px;padding:0 16px;border-radius:8px;border:1px solid var(--line);background:transparent;color:var(--fg);font:600 14px/1 inherit;cursor:pointer}
+  button.primary{background:var(--accent);border-color:var(--accent);color:var(--on-accent)}
+  button:hover{border-color:var(--fg)}
+  main{flex:1;min-height:0;display:grid;grid-template-columns:300px 375px 1fr 1fr;gap:16px;padding:16px 24px 24px}
+  @media (max-width:1400px){main{grid-template-columns:300px 375px 1fr;}.p-owner{grid-column:3}.p-kitchen{grid-row:1}}
+  @media (max-width:1100px){main{grid-template-columns:1fr 1fr;overflow:auto}.panel{min-height:640px}.p-owner{grid-column:auto}}
+  .panel{display:flex;flex-direction:column;min-height:0;border-radius:12px;border:1px solid var(--line);background:var(--panel);overflow:hidden;transition:border-color .3s ease,box-shadow .3s ease}
+  .panel.hot{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 25%,transparent)}
+  .panel h2{margin:0;padding:10px 14px;font:600 13px/1 "IBM Plex Sans",sans-serif;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line)}
+  .panel.hot h2{color:var(--accent)}
+  iframe{flex:1;width:100%;border:0;background:#F4F1EC}
+  /* WhatsApp chat */
+  .wa{flex:1;display:flex;flex-direction:column;min-height:0;background:#0B141A}
+  .wahead{display:flex;align-items:center;gap:10px;padding:10px 12px;background:#1F2C33}
+  .wahead span{width:32px;height:32px;border-radius:50%;background:url(/img/shawarma.jpg) center/cover}
+  .wahead b{display:block;font-size:14px}.wahead small{color:#8696A0;font-size:12px}
+  .msgs{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:6px;padding:12px 10px}
+  .m{max-width:88%;padding:6px 10px;border-radius:8px;background:#202C33;font-size:13.5px;line-height:1.4;white-space:pre-wrap;word-break:break-word;animation:pop .35s ease both}
+  .m.me{align-self:flex-end;background:#005C4B}
+  .m .cta{display:block;margin:6px -10px -6px;padding:8px;border-top:1px solid #2F3B43;text-align:center;color:#53BDEB;font-weight:600;white-space:normal}
+  .typing{display:flex;gap:8px;padding:10px;background:#1F2C33;align-items:center}
+  .typing div{flex:1;min-height:36px;border-radius:18px;background:#2A3942;padding:8px 14px;font-size:13.5px;color:#E9EDEF}
+  .typing div:empty::before{content:"Message";color:#8696A0}
+  @keyframes pop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="step" id="step" aria-live="polite">Getting ready…</div>
+    <div class="sub" id="sub">Everything below is the real app running by itself. Nothing is pre-recorded.</div>
+    <div class="dots" id="dots" aria-hidden="true"></div>
+  </div>
+  <div class="ctrl"><button id="pause">Pause</button><button class="primary" id="restart">Restart</button></div>
+</header>
+<main>
+  <section class="panel p-wa" id="p-wa"><h2>Customer · WhatsApp</h2>
+    <div class="wa"><div class="wahead"><span></span><div><b id="shopname">Saffron &amp; Salt</b><small id="shopnum">Business account</small></div></div>
+      <div class="msgs" id="msgs"></div><div class="typing"><div id="typing"></div></div></div></section>
+  <section class="panel p-phone" id="p-phone"><h2>Customer · Phone browser</h2><iframe id="phone" title="Customer phone" src="about:blank"></iframe></section>
+  <section class="panel p-kitchen" id="p-kitchen"><h2>Kitchen screen</h2><iframe id="kitchen" title="Kitchen screen"></iframe></section>
+  <section class="panel p-owner" id="p-owner"><h2>Owner</h2><iframe id="owner" title="Owner dashboard"></iframe></section>
+</main>
+
+<script type="module">
+// Dev-only page (the server doesn't serve it in production). It plays one order end to end through the real API.
+const STAFF = 'dev-staff';
+const HOME = { lat: 25.2048, lng: 55.2518, building: 'Al Wasl Tower', flat: '1408', landmark: 'Near Safa Park gate 2' }; // ~3 km from the shop
+const SPEED = Number(new URLSearchParams(location.search).get('speed') || 1); // ?speed=2 plays twice as fast
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const local = (u) => { const x = new URL(u); return location.origin + x.pathname + x.search; }; // links point at PUBLIC_URL; stay on this origin
+
+let paused = false, runId = 0;
+$('pause').onclick = () => { paused = !paused; $('pause').textContent = paused ? 'Play' : 'Pause'; };
+$('restart').onclick = () => run();
+
+async function wait(ms, id) {
+  let left = ms / SPEED;
+  while (left > 0) { if (id !== runId) throw new Error('stopped'); await new Promise((r) => setTimeout(r, 100)); if (!paused) left -= 100; }
+}
+async function api(path, { method = 'GET', body, token } = {}) {
+  const r = await fetch(path, { method, headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: body ? JSON.stringify(body) : undefined });
+  const data = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(data.error || `${path} ${r.status}`);
+  return data;
+}
+
+const STEPS = 11;
+$('dots').innerHTML = '<i></i>'.repeat(STEPS);
+function say(n, html, focus) {
+  $('step').innerHTML = html;
+  [...$('dots').children].forEach((d, i) => d.classList.toggle('on', i < n));
+  document.querySelectorAll('.panel').forEach((p) => p.classList.toggle('hot', focus.includes(p.id.slice(2))));
+}
+
+// ---- WhatsApp side ----
+let customer, seen;
+function bubble(text, me) {
+  const lines = text.split('\n').map((l) => {
+    const m = l.match(/^\[(.+?)\]\s+(https?:\S+)$/);
+    return m ? `<span class="cta">${esc(m[1])}</span>` : esc(l).replace(/\*([^*]+)\*/g, '<b>$1</b>'); // WhatsApp *bold*
+  });
+  const el = document.createElement('div');
+  el.className = 'm' + (me ? ' me' : '');
+  el.innerHTML = lines.join('\n').replace(/\n(<span class="cta">)/g, '$1');
+  $('msgs').append(el); $('msgs').scrollTop = 1e9;
+}
+async function pollBot() {
+  const out = await api('/api/dev/outbox').catch(() => []);
+  const mine = out.filter((m) => m.phone === customer && !seen.has(m.at + m.body)).reverse();
+  for (const m of mine) { seen.add(m.at + m.body); bubble(m.body, false); }
+  return mine;
+}
+async function waitForBot(id, re) {
+  for (let i = 0; i < 60; i++) {
+    const got = await pollBot();
+    const hit = got.find((m) => re.test(m.body));
+    if (hit) return hit.body;
+    await wait(500, id);
+  }
+  throw new Error('The bot did not reply.');
+}
+async function type(id, text) {
+  $('typing').textContent = '';
+  for (const ch of text) { $('typing').textContent += ch; await wait(55, id); }
+  await wait(500, id);
+  $('typing').textContent = '';
+  bubble(text, true);
+  await api('/webhooks/whatsapp', { method: 'POST', body: { entry: [{ changes: [{ value: {
+    contacts: [{ wa_id: customer, profile: { name: 'Sara' } }],
+    messages: [{ id: 'demo-' + Date.now(), from: customer, type: 'text', text: { body: text } }] } }] }] } });
+}
+
+async function rider() {
+  try { const r = JSON.parse(localStorage.getItem('demoRider')); await api('/api/rider/orders', { token: r.token }); return r; }
+  catch { const r = await api('/api/staff/riders', { method: 'POST', token: STAFF, body: { name: 'Imran' } }); localStorage.setItem('demoRider', JSON.stringify(r)); return r; }
+}
+
+// Close any order a stopped run left open, so each run starts with an empty kitchen.
+async function cleanup() {
+  const open = await api('/api/staff/orders', { token: STAFF }).catch(() => []);
+  const r = JSON.parse(localStorage.getItem('demoRider') || 'null');
+  for (const o of open) {
+    if (['PICKED_UP', 'ARRIVING'].includes(o.status) && r) await api(`/api/rider/orders/${o.id}/deliver`, { method: 'POST', token: r.token, body: {} }).catch(() => {});
+    else if (o.status === 'RIDER_ASSIGNED') { await api(`/api/staff/orders/${o.id}/unassign`, { method: 'POST', token: STAFF, body: {} }).catch(() => {}); await api(`/api/staff/orders/${o.id}/cancel`, { method: 'POST', token: STAFF, body: { reason: 'Demo reset' } }).catch(() => {}); }
+    else if (['PAYMENT_PENDING', 'CONFIRMED', 'ACCEPTED', 'READY'].includes(o.status)) await api(`/api/staff/orders/${o.id}/cancel`, { method: 'POST', token: STAFF, body: { reason: 'Demo reset' } }).catch(() => {});
+  }
+}
+const BLANK = '<body style="margin:0;height:100vh;display:grid;place-items:center;background:#1C1814;color:#A99F92;font:15px/1.5 system-ui,sans-serif;text-align:center;padding:24px">Waiting for the customer to tap the link in WhatsApp…</body>';
+function phone(src) { const f = $('phone'); if (src) { f.removeAttribute('srcdoc'); f.src = src; } else f.srcdoc = BLANK; }
+
+async function run() {
+  const id = ++runId; paused = false; $('pause').textContent = 'Pause';
+  customer = '97150' + String(Math.floor(1e6 + Math.random() * 9e6)); seen = new Set();
+  $('msgs').innerHTML = ''; $('typing').textContent = '';
+  try { localStorage.setItem('staffToken', STAFF); } catch {}
+  phone(null);
+  try {
+    await cleanup();
+    $('kitchen').src = '/kitchen'; $('owner').src = '/owner';
+    const { shop } = await api('/api/menu');
+    $('shopname').textContent = shop.name;
+    if (shop.whatsapp) $('shopnum').textContent = '+' + shop.whatsapp;
+    await api('/api/dev/outbox').then((o) => o.forEach((m) => seen.add(m.at + m.body)));
+    await wait(1500, id);
+
+    say(1, 'A customer finds the restaurant on Google Maps and <b>sends a WhatsApp message</b>.', ['wa']);
+    await wait(1500, id);
+    await type(id, '2 chicken shawarma and a mango juice please');
+
+    say(2, 'The bot <b>understands the order</b> and replies with a link. The cart is already filled.', ['wa']);
+    const reply = await waitForBot(id, /Review your order|Tap below/);
+    await wait(4000, id);
+
+    say(3, 'She taps the link. The <b>menu opens with her order in the cart</b>.', ['phone']);
+    const link = reply.match(/https?:\S+/)[0];
+    phone(local(link));
+    await wait(7000, id);
+
+    say(4, 'She drops a pin at her door, picks <b>cash on delivery</b> and places the order.', ['phone', 'wa']);
+    await wait(3000, id);
+    const u = new URL(link), token = u.searchParams.get('t');
+    const items = (u.searchParams.get('c') || '').split(',').filter(Boolean).map((p) => { const [itemId, qty] = p.split(':'); return { id: itemId, qty: Number(qty) }; });
+    const order = await api('/api/orders', { method: 'POST', body: { token, idemKey: 'demo' + id + customer, type: 'delivery', payment: 'cod', items, address: HOME } });
+    await waitForBot(id, /confirmed/i);
+    phone(local(order.trackUrl));
+    await wait(5000, id);
+
+    say(5, 'The kitchen screen beeps. The cook <b>accepts with a 15-minute ready time</b>.', ['kitchen']);
+    await wait(4000, id);
+    await api(`/api/staff/orders/${order.id}/accept`, { method: 'POST', token: STAFF, body: { prepMin: 15 } });
+    await waitForBot(id, /15 min/);
+    await wait(4000, id);
+
+    say(6, 'Food is ready. The kitchen <b>hands it to rider Imran</b>.', ['kitchen']);
+    await wait(2500, id);
+    await api(`/api/staff/orders/${order.id}/ready`, { method: 'POST', token: STAFF, body: {} });
+    await wait(2500, id);
+    const r = await rider();
+    await api(`/api/staff/orders/${order.id}/assign`, { method: 'POST', token: STAFF, body: { riderId: r.id } });
+    await wait(4000, id);
+
+    say(7, 'Imran picks it up. The customer gets a <b>live tracking link</b> on WhatsApp.', ['wa', 'phone']);
+    await api('/api/rider/location', { method: 'POST', token: r.token, body: { lat: shop.lat, lng: shop.lng } });
+    await api(`/api/rider/orders/${order.id}/pickup`, { method: 'POST', token: r.token, body: {} });
+    await waitForBot(id, /on the way/i);
+    await wait(4000, id);
+
+    say(8, 'She <b>watches the bike move</b> on the map, live from the rider’s phone GPS.', ['phone']);
+    const N = 14;
+    for (let i = 1; i <= N; i++) {
+      const f = i / N;
+      await api('/api/rider/location', { method: 'POST', token: r.token, body: { lat: shop.lat + (HOME.lat - shop.lat) * f, lng: shop.lng + (HOME.lng - shop.lng) * f } });
+      await pollBot();
+      if (i === N - 1) say(9, 'Close by: she gets <b>“arriving in about 2 minutes”</b> with the cash amount.', ['wa', 'phone']);
+      await wait(2500, id);
+    }
+    await wait(3000, id);
+
+    say(10, '<b>Delivered.</b> Imran collects the cash. She gets a WhatsApp asking for a rating, and gives 5.', ['wa', 'phone']);
+    await api(`/api/rider/orders/${order.id}/deliver`, { method: 'POST', token: r.token, body: {} });
+    await waitForBot(id, /Delivered/i);
+    await wait(3000, id);
+    await type(id, '5');
+    await wait(2500, id);
+    await pollBot();
+
+    say(11, 'The owner sees <b>today’s orders, takings and the cash Imran should hand in</b>.', ['owner']);
+    $('owner').src = '/owner';
+    await wait(9000, id);
+
+    say(11, 'That’s the whole flow, start to finish. <b>Playing again shortly…</b>', []);
+    await wait(12000, id);
+    run();
+  } catch (e) {
+    if (e.message === 'stopped') return;
+    $('step').textContent = 'The demo stopped: ' + e.message;
+    $('sub').textContent = 'Press Restart to try again.';
+  }
+}
+run();
+</script>
+</body>
+</html>

@@ -21,7 +21,7 @@ const call = (path, opts = {}) => api(path, { ...opts, token });
 token ? start() : loginScreen();
 
 function loginScreen(msg = '') {
-  es?.close(); clearTimeout(streamRetry); everConnected = false;
+  es?.close(); clearTimeout(streamRetry); clearTimeout(pollTimer); everConnected = false;
   app.innerHTML = `<form class="loginbox" id="login"><h1>Restaurant login</h1>
     <p class="muted" style="margin:0">For kitchen, reception and the manager.</p>
     <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)">Staff password<input class="input" id="pw" type="password" autocomplete="current-password" required></label>
@@ -39,7 +39,27 @@ async function start() {
     store.set('staffToken', null);
     return loginScreen(e.status === 401 ? 'Wrong password.' : e.message);
   }
-  shell(); render(); stream();
+  shell(); render(); stream(); poll();
+}
+
+// Safety net under the live stream: some networks/proxies (e.g. Cloudflare quick tunnels) never deliver it.
+// Re-check every 4 s and redraw only when something changed, so typing in a form isn't interrupted.
+let pollTimer = null, lastSig = '';
+async function poll() {
+  clearTimeout(pollTimer);
+  if (!token) return;
+  try {
+    const [list, c] = await Promise.all([call('/api/staff/orders'), call('/api/staff/handoffs')]);
+    if ($('#live') && es?.readyState !== 1) $('#live').textContent = 'Live'; // fresh within 4 s even without the stream
+    const sig = JSON.stringify([list.map((o) => [o.id, o.status, o.rider_id]), c.length]);
+    if (sig !== lastSig) {
+      const fresh = list.filter((o) => o.status === 'CONFIRMED' && orders.get(o.id)?.status !== 'CONFIRMED');
+      if (lastSig && fresh.length) { beep(); toast(`New order #${fresh[0].id}`); }
+      lastSig = sig; orders = new Map(list.map((o) => [o.id, o])); chats = c;
+      if (tab === 'orders' || tab === 'today') render(); else renderTabs();
+    }
+  } catch (e) { if (e.status === 401) return loginScreen('Please log in again.'); }
+  pollTimer = setTimeout(poll, 4000);
 }
 
 function shell() {
@@ -62,6 +82,10 @@ async function stream() {
     $('#live').textContent = 'Reconnecting…'; streamRetry = setTimeout(stream, 5000); return;
   }
   es = new EventSource(`/api/staff/stream?ticket=${encodeURIComponent(ticket)}`);
+  // A proxy that buffers the stream (e.g. Cloudflare quick tunnels) leaves it hanging and ties up one of the
+  // browser's few connections to this site. If it hasn't opened in 5 s, drop it and let poll() keep the screen fresh.
+  const thisEs = es;
+  setTimeout(() => { if (es === thisEs && es.readyState !== 1) { es.onerror = null; es.close(); } }, 5000);
   es.onopen = async () => {
     $('#live').textContent = 'Live';
     if (everConnected) { orders = new Map((await call('/api/staff/orders').catch(() => [])).map((o) => [o.id, o])); render(); } // catch up on anything missed
