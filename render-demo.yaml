@@ -11,7 +11,9 @@ services:
     envVars:
       - key: NODE_ENV
         value: development
-      - key: OPEN_TIME       # open around the clock so the demo always works
+      - key: APP_SECRET      # random per deploy, so customer links can't be forged with the built-in dev secret
+        generateValue: true
+      - key: OPEN_TIME      # open around the clock so the demo always works
         value: "00:00"
       - key: CLOSE_TIME
         value: "00:00"
