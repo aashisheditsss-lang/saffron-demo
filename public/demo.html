@@ -69,7 +69,7 @@
 // Dev-only page (the server doesn't serve it in production). It plays one order end to end through the real API.
 const STAFF = 'dev-staff';
 const HOME = { lat: 25.2048, lng: 55.2518, building: 'Al Wasl Tower', flat: '1408', landmark: 'Near Safa Park gate 2' }; // ~3 km from the shop
-const SPEED = Number(new URLSearchParams(location.search).get('speed') || 1); // ?speed=2 plays twice as fast
+const SPEED = Number(new URLSearchParams(location.search).get('speed') || 2); // default 2x; ?speed=1 for the slow walk-through
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const local = (u) => { const x = new URL(u); return location.origin + x.pathname + x.search; }; // links point at PUBLIC_URL; stay on this origin
@@ -80,7 +80,7 @@ $('restart').onclick = () => run();
 
 async function wait(ms, id) {
   let left = ms / SPEED;
-  while (left > 0) { if (id !== runId) throw new Error('stopped'); await new Promise((r) => setTimeout(r, 100)); if (!paused) left -= 100; }
+  while (left > 0) { if (id !== runId) throw new Error('stopped'); const t = Math.min(left, 100); await new Promise((r) => setTimeout(r, t)); if (!paused) left -= t; }
 }
 async function api(path, { method = 'GET', body, token } = {}) {
   const r = await fetch(path, { method, headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) }, body: body ? JSON.stringify(body) : undefined });

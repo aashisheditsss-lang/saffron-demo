@@ -214,3 +214,11 @@ test('Supabase phone login can place an order; unverified phone cannot', async (
   assert.equal((await t.call('POST', '/api/orders', order, 'forged')).status, 401);
   t.close();
 });
+
+test('odd paths like // do not crash the server', async () => {
+  const s = await start();
+  try {
+    assert.notEqual((await s.call('GET', '//')).status, 500);
+    assert.equal((await s.call('GET', '/api/menu')).status, 200); // still up
+  } finally { s.close(); }
+});

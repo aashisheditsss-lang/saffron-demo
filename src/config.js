@@ -1,6 +1,6 @@
 // All settings come from environment variables (see .env.example).
 export function loadConfig(env = process.env) {
-  const publicUrl = (env.PUBLIC_URL || 'http://localhost:8080').replace(/\/$/, '');
+  const publicUrl = (env.PUBLIC_URL || env.RENDER_EXTERNAL_URL || 'http://localhost:8080').replace(/\/$/, ''); // Render sets RENDER_EXTERNAL_URL itself
   const config = {
     production: env.NODE_ENV === 'production',
     port: Number(env.PORT || 8080),

@@ -9,7 +9,7 @@ export function router({ corsOrigin = '*' } = {}) {
     routes.push({ method, re: new RegExp('^' + path.replace(/:(\w+)/g, '(?<$1>[^/]+)') + '$'), handler });
 
   async function handle(req, res) {
-    const url = new URL(req.url, 'http://local');
+    const url = new URL('http://local' + req.url); // not new URL(req.url, base): a path like '//x' would parse as a host and crash the server
     if (url.pathname.startsWith('/api/')) {
       res.setHeader('Access-Control-Allow-Origin', corsOrigin);
       res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');

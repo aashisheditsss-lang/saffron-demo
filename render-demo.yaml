@@ -1,0 +1,19 @@
+# Free showcase copy for demos: Render → New → Blueprint → this repo → Blueprint path "render-demo.yaml".
+# shortcut: development mode on purpose, so /demo runs and the staff password is dev-staff. Demo data only:
+# the free plan has no disk, so orders reset whenever Render restarts or sleeps it. Use render.yaml for a real restaurant.
+services:
+  - type: web
+    name: saffron-demo
+    runtime: docker
+    plan: free
+    region: frankfurt
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: development
+      - key: OPEN_TIME       # open around the clock so the demo always works
+        value: "00:00"
+      - key: CLOSE_TIME
+        value: "00:00"
+      - key: SHOP_WHATSAPP   # the number shown on the site; typed into Render, never stored here
+        sync: false
